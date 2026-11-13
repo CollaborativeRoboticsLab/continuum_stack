@@ -1,0 +1,37 @@
+dual_joystick_mapper:
+  ros__parameters:
+    stale_timeout_sec: 0.5
+    x_axis: 0
+    y_axis: 1
+    z_axis: 2
+    knob_axis: 3
+    enable_button: 0
+    stage_1_topic: stage_1/joy
+    stage_2_topic: stage_2/joy
+    arm_target_topic: arm_target
+
+arm_controller_node:
+  ros__parameters:
+    gain: 14.137166941154069
+    kp: 10.0
+    kd: 1.0
+    target_timeout_sec: 0.5
+    feedback_timeout_sec: 0.5
+    command_period_sec: 0.0125
+    arm_target_topic: arm_target
+    motor_feedback_topic: motor_feedback
+    motion_control_topic: motion_control
+
+fake_motor_node:
+  ros__parameters:
+    motor_ids: [1, 2, 3, 4]
+    feedback_rate_hz: 20.0
+    motor_feedback_topic: motor_feedback
+    motion_control_topic: motion_control
+
+motor_controller_node:
+  ros__parameters:
+    can_interface: can0
+    motor_ids: [1, 2, 3, 4]
+    motor_types: [5, 5, 5, 5]
+    command_timeout_sec: 0.5

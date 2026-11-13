@@ -1,0 +1,9 @@
+{
+  "name": "Continuum Robot jazzy base",
+  "dockerFile": "Dockerfile",
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": true,
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/colcon_ws/src/${localWorkspaceFolderBasename},type=bind",
+  "workspaceFolder": "/home/ubuntu/colcon_ws",
+  "mounts": []
+}
