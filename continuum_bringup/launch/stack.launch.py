@@ -21,8 +21,9 @@ def generate_launch_description():
             'namespace', default_value='continuum_stack',
             description='ROS namespace for all stack nodes and relative topics.'),
         DeclareLaunchArgument(
-            'enable_real_hardware', default_value='false',
-            description='Start the real CAN driver; requires operator supervision.'),
+            'enable_real_hardware', default_value='true',
+            description='Start the real CAN driver and enable motors at startup; '
+                        'requires operator supervision.'),
         DeclareLaunchArgument(
             'use_joysticks', default_value='false',
             description='Start joy_node instances for the configured device IDs.'),

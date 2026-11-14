@@ -16,8 +16,8 @@ The source checkouts identify these upstream repositories:
 
 | Original source | Canonical destination | Notes |
 | --- | --- | --- |
-| Joystick repo `src/joystick_mapper/` | `continuum_joystick_mapper/` | Package metadata, Python node, resource marker, launch file, and lint tests were migrated. The executable remains `joystick_mapper_node`; Python module remains `joystick_mapper`. |
-| Joystick repo `src/arm_controller/` | `continuum_arm_controller/` | Package metadata, Python node, resource marker, and executable entry point were migrated. The Python module remains `arm_controller`. |
+| Joystick repo `src/joystick_mapper/` | `continuum_joystick_mapper/` | Package metadata, Python node, resource marker, launch file, and lint tests were migrated. The executable remains `joystick_mapper_node`; the Python module is now `continuum_joystick_mapper`. |
+| Joystick repo `src/arm_controller/` | `continuum_arm_controller/` | Package metadata, Python node, resource marker, and executable entry point were migrated. The Python module is now `continuum_arm_controller`. |
 | Motor repo `carmy_motor_controller/` | `continuum_carmy_motor_controller/` | CMake package, driver source, and headers were migrated. The executable remains `rs_motor_ros2_node`. |
 | Motor repo `carmy_motor_controller/msg/` | `continuum_msgs/msg/` | `MotorFeedback.msg` and `MotorMotionControl.msg` moved here with their definitions unchanged. |
 | No existing source file | `continuum_msgs/msg/ArmTarget.msg` | Adds the missing arm target interface inferred from the Python consumers. |
@@ -26,15 +26,17 @@ The source checkouts identify these upstream repositories:
 The root `README.md` describes the clean build and bringup workflow. The
 canonical development container is `.devcontainer/`. Legacy compose files,
 host CAN setup scripts, startup scripts, and the standalone diagnostic mapper
-remain only in the preserved source checkouts; they are not the canonical path
-and were not run as part of this refactor.
+are available in the linked upstream repositories, not in the canonical
+package tree; they were not run as part of this refactor. Local backup copies
+and their exact revisions should be confirmed by the project owners.
 
 ## Interface And Name Changes
 
 - ROS package names are now `continuum_msgs`,
 	`continuum_carmy_motor_controller`, `continuum_joystick_mapper`,
 	`continuum_arm_controller`, and `continuum_bringup`. The mapper and arm
-	controller executable names and Python module names remain unchanged.
+	controller executable names remain unchanged. Downstream Python imports must
+	use `continuum_joystick_mapper` and `continuum_arm_controller`.
 - Motor messages keep their original definitions: `MotorFeedback.msg` and
 	`MotorMotionControl.msg` are byte-for-byte identical to the source files.
 	Their generated ROS types now live in `continuum_msgs/msg/`. Downstream ROS
@@ -62,8 +64,9 @@ and were not run as part of this refactor.
 ## Runtime Changes
 
 - The driver has an explicit `hardware_enabled` parameter which defaults to
-	false. The default bringup starts the fake backend, not the CAN driver; the
-	real driver is only selected with `enable_real_hardware:=true`.
+	false. `stack.launch.py` defaults to `enable_real_hardware:=true` and starts
+	the CAN driver, which can enable motors immediately. `fake.launch.py` forces
+	`enable_real_hardware:=false` and starts the fake backend instead.
 - The fake backend publishes connected feedback for IDs 1-4 and logs accepted
 	motion messages. It is an interface exercise, not a motor or transport
 	simulator.
@@ -82,5 +85,5 @@ Please preserve the source projects' copyright and license notices when
 changing migrated files. No new license or individual maintainer identity has
 been inferred here. For future changes, make edits in the canonical package
 directories above and update this map if source ownership, public interfaces,
-or package destinations change. Keep the preserved checkouts untouched unless
-the original project history itself needs an update.
+or package destinations change. Refer to the linked upstream repositories for
+their original project histories.

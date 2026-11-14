@@ -3,10 +3,11 @@
 ## Review status
 
 The refactor introduces separate interface, mapper, controller, motor driver,
-and bringup packages, with a fake backend and explicit real-hardware opt-in.
+and bringup packages, with a fake backend and a hardware-default stack launch.
 This review covers commit `f9f44a7` and the uncommitted changes present at
 review time; the session history did not identify a separate GPT Luna change
-set.
+set. The observations below are historical; see [the student handover](docs/next_steps.md)
+for the current priorities.
 
 - A clean, isolated ROS Jazzy build completed for all five packages. The
   existing tests reported 12 tests, no failures or errors, and one skipped.
@@ -21,22 +22,13 @@ set.
 
 ## Priority 1: bringup, feedback, and command behavior
 
-- [ ] Fix installation of the fake backend. The
-  [bringup package](continuum_bringup/setup.py) uses `find_packages()`, but
-  `continuum_bringup/continuum_bringup/` lacks `__init__.py`. Ensure the
-  package and executable are installed and add a clean-install launch test
-  that catches import failures. Re-run the synthetic joystick-to-command
-  smoke test after fixing it.
-- [ ] Fix stale feedback being published as connected. In
-  [motor_cfg.cpp](continuum_carmy_motor_controller/src/motor_cfg.cpp),
-  `receive_status_frame()` returns without updating state on a timeout or
-  unrelated frame; [main.cpp](continuum_carmy_motor_controller/src/main.cpp)
-  then republishes the previous values and infers connection from nonzero
-  data. Track the time of each valid motor status frame, distinguish timeout
-  and transport errors, and publish disconnection or stop refreshing feedback
-  when it expires. Do not treat all-zero values as proof of disconnection.
-  Add hardware-free tests for valid, timed-out, unrelated, malformed, and
-  recovered feedback.
+- [ ] Add a clean-install launch test for the fake backend and a synthetic
+  joystick-to-command smoke test. The missing Python package initializer has
+  been added and fake feedback has been observed in a standalone smoke test.
+- [ ] Extend stale-feedback coverage. The driver now tracks valid status frame
+  freshness and distinguishes timeouts from receive errors, with focused
+  freshness tests. Add hardware-free tests for valid, timed-out, unrelated,
+  malformed, and recovered frames and transport errors.
 - [ ] Make driver timing and command expiry verifiable. The driver performs
   synchronous receive operations with a 50 ms timeout, including during
   sends and sequential feedback polling, on its executor thread. Measure and
@@ -64,19 +56,18 @@ set.
 
 - [ ] Rebuild and verify the devcontainer on a supported host. The current
   [configuration](.devcontainer/devcontainer.json) requests privileged mode,
-  host networking, all GPUs, and `/dev` by default, contrary to the portable
-  default described in [README.md](README.md). Provide an opt-in hardware
-  configuration and reconcile the documentation. Check bind mounts on hosts
+  host networking, all GPUs, and `/dev` by default, as described in
+  [README.md](README.md). Provide an opt-in hardware configuration and a
+  portable default. Check bind mounts on hosts
   without an existing `.bash_history`.
 - [ ] Verify the [Dockerfile](.devcontainer/Dockerfile) works on a clean image:
-  the configurable username is no longer created, rosdep initialization is
-  assumed, and Cyclone DDS is selected without explicitly installing its ROS
-  package. Either install and verify the selected RMW or use an available
-  default. Confirm non-root UID handling, workspace permissions, dependency
+  rosdep initialization is assumed and Cyclone DDS is now explicitly
+  installed but has not been verified in a rebuilt image. Confirm non-root UID
+  handling, workspace permissions, dependency
   installation, and overlay sourcing after a rebuild.
 - [ ] Add an automated installed-launch integration test that publishes
   synthetic joystick messages, observes enabled arm targets and commands for
-  all four motors, verifies the default fake backend and absence of the real
+  all four motors, verifies the fake backend and absence of the real
   driver, and exercises stale input and recovery. The existing
   [launch test](continuum_bringup/test/test_stack_launch.py) checks launch
   conditions only; it does not launch the ROS graph.
@@ -90,10 +81,6 @@ set.
 
 ## Priority 3: documentation and project hygiene
 
-- [ ] Correct [the refactoring map](docs/refactoring.md): the current Python
-  module paths are `continuum_joystick_mapper` and
-  `continuum_arm_controller`, not the original module names. Document the
-  effect on downstream Python imports.
 - [ ] Confirm the original source checkouts and Git histories remain
   recoverable outside colcon discovery, and document their actual location.
   Resolve the placeholder maintainer and license metadata with the project

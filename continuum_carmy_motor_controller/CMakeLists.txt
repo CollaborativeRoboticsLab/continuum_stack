@@ -49,4 +49,13 @@ install(
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 ament_export_include_directories(include)
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_feedback_freshness
+    test/test_feedback_freshness.cpp
+  )
+  target_include_directories(test_feedback_freshness PRIVATE include)
+endif()
+
 ament_package()

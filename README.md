@@ -1,8 +1,9 @@
 # Continuum Stack
 
 ROS 2 Jazzy workspace for the Continuum arm. The packages in this repository
-are the canonical source; the historical project repositories remain beside
-them until their source-preservation/archive handling is complete.
+are the canonical source. See [docs/refactoring.md](docs/refactoring.md) for
+the original project repositories and [docs/next_steps.md](docs/next_steps.md)
+for the student handover, known issues, and verification limits.
 
 ## Packages
 
@@ -68,13 +69,17 @@ ros2 interface show continuum_msgs/msg/MotorFeedback
 
 ## Hardware-Free Bringup
 
-The default launch starts the mapper, arm controller, and synthetic motor
+The fake launch starts the mapper, arm controller, and synthetic motor
 feedback/command backend. It does not start the CAN driver, enable motors, or
-require physical joysticks:
+start physical joystick nodes by default:
 
 ```bash
-ros2 launch continuum_bringup stack.launch.py
+ros2 launch continuum_bringup fake.launch.py
 ```
+
+The fake launch forces `enable_real_hardware:=false`, even if it is supplied
+as `true`. `--show-args` displays the shared stack argument's `true` default,
+not the fake wrapper's override.
 
 Publish synthetic joystick messages in a second terminal to exercise the ROS
 path. Button 0 is the enable input; either stage enables the target:
@@ -90,7 +95,7 @@ limits, or stopping behavior. With joystick nodes enabled, set their device
 indices explicitly:
 
 ```bash
-ros2 launch continuum_bringup stack.launch.py use_joysticks:=true \
+ros2 launch continuum_bringup fake.launch.py use_joysticks:=true \
 	stage_1_device:=0 stage_2_device:=1
 ```
 
@@ -99,24 +104,30 @@ missing device is reported by `joy_node`, not treated as a healthy input.
 
 ## Hardware Operation
 
-The real driver is excluded from the default launch. Starting it requires an
-explicit opt-in:
+The stack launch starts the real driver by default:
 
 ```bash
-ros2 launch continuum_bringup stack.launch.py enable_real_hardware:=true
+ros2 launch continuum_bringup stack.launch.py
 ```
 
-This command can open `can0` and enable configured motors. Do not use it as an
+This command can open `can0` and enable configured motors immediately at
+startup. Do not use it as an
 automated test. Hardware commissioning requires a separate operator decision,
 supervision, validated robot configuration, mechanical restraint, and an
 independent emergency stop. Host CAN setup is an operator-only task; this
 workspace never configures host links or runs legacy setup scripts.
+The real SocketCAN driver remains implemented, but has not been tested on
+hardware after this refactor. See the commissioning checklist in
+[docs/next_steps.md](docs/next_steps.md#real-can-handover).
 
-The mapper and controller stop forwarding malformed, disabled, disconnected,
-or stale inputs. The driver expires each command and stops sending repeated
-motion frames until a fresh command arrives. This does not establish that the
-physical motor has stopped. No physical travel/torque limits or functional
-safety claims are made here.
+The mapper disables a stale joystick's trigger and substitutes zero for its
+axes. If the other joystick remains fresh and enabled, the combined target can
+still be enabled and the stale stage can be commanded toward its offset. This
+behavior requires review before hardware operation. The controller gates on
+disabled or stale targets and disconnected or stale feedback. The driver stops
+repeating expired commands, but blocking CAN reads can delay expiry handling.
+Stopping command frames does not establish that a physical motor has stopped.
+No physical travel/torque limits or functional safety claims are made here.
 
 ## Configuration and Namespaces
 
@@ -129,7 +140,7 @@ and the motor protocol require hardware validation before operation.
 For example, launch under another namespace:
 
 ```bash
-ros2 launch continuum_bringup stack.launch.py namespace:=lab_arm
+ros2 launch continuum_bringup fake.launch.py namespace:=lab_arm
 ```
 
 Relative topics then resolve under `/lab_arm`. ROS remappings can override
@@ -137,12 +148,18 @@ individual topic names when integrating with another graph.
 
 ## Devcontainer and Troubleshooting
 
-The devcontainer is based on ROS 2 Jazzy and installs build/test tools,
-`joy`, launch testing, `can-utils`, and `iproute2`. It uses a non-root user and
-does not request privileged mode, GPU access, or host CAN setup by default.
-Rebuild it after Dockerfile changes, then follow the clean build commands
-above. Container image rebuilding is not verified in environments without
-Docker or another compatible builder.
+The devcontainer is based on ROS 2 Jazzy and selects Cyclone DDS through
+`RMW_IMPLEMENTATION=rmw_cyclonedds_cpp`; its Dockerfile installs the matching
+ROS package. The current devcontainer configuration requests privileged mode,
+host networking, all GPUs, and a `/dev` bind mount. These requirements may not
+work on every host and grant broad device access; review them before use.
+Rebuild the container after Dockerfile changes, then follow the build commands
+above. The image rebuild has not been verified in this environment.
+
+Use the same build options consistently in a workspace: switching an existing
+build between a normal install and `--symlink-install` can leave incompatible
+generated artifacts. To avoid disturbing an existing build, use fresh
+`--build-base` and `--install-base` directories instead.
 
 If `rosdep install` reports an uninitialized database, initialize/update
 rosdep in the container and retry. If packages do not appear in `colcon list`,

@@ -27,6 +27,7 @@ RUN apt-get update \
         ros-jazzy-joy \
         ros-jazzy-launch-testing \
         ros-jazzy-launch-testing-ros \
+        ros-jazzy-rmw-cyclonedds-cpp \
         ros-jazzy-rosidl-default-generators \
         ros-jazzy-rosidl-default-runtime \
         ros-jazzy-xacro \
