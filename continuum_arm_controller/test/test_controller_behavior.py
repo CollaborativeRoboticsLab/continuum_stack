@@ -1,7 +1,8 @@
 import math
 
 import rclpy
-from arm_controller.arm_controller_node import ArmControllerNode, MOTOR_TARGETS
+from continuum_arm_controller.arm_controller_node import (
+    ArmControllerNode, MOTOR_TARGETS)
 from continuum_msgs.msg import ArmTarget, MotorFeedback
 import pytest
 

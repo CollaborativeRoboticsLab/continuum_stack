@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'arm_controller_node = arm_controller.arm_controller_node:main',
+            'arm_controller_node = continuum_arm_controller.arm_controller_node:main',
         ],
     },
 )

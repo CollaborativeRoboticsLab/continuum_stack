@@ -1,8 +1,8 @@
 import time
 
-from joystick_mapper.joystick_mapper_node import DualJoystickMapper
-import rclpy
+from continuum_joystick_mapper.joystick_mapper_node import DualJoystickMapper
 import pytest
+import rclpy
 from sensor_msgs.msg import Joy
 
 
